@@ -1,0 +1,13 @@
+[package]
+authors = ["zexoverz"]
+description = "Nullifier circuit for ERC-XXXX"
+name = "nullifier"
+version = "0.1.0"
+license = "CC0-1.0"
+type = "bin"
+
+[dependencies]
+
+[dev-dependencies]
+
+[features]

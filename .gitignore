@@ -1,0 +1,21 @@
+# Foundry
+out/
+forge-cache/
+
+# Noir
+circuits/*.json
+.nargo/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
