@@ -1,10 +1,10 @@
 <div align="center">
-    <img width="800" height="240" alt="ERC-XXXX" src="https://via.placeholder.com/800x240/000000/FFFFFF?text=ERC-XXXX+Unclonable+Agent+Execution+Credentials" />
+    <img width="800" height="240" alt="ERC-1953 Unclonable Agent Execution Credentials" src="https://via.placeholder.com/800x240/000000/FFFFFF?text=ERC-1953+Unclonable+Agent+Execution+Credentials" />
 </div>
 
 # Unclonable Agent Execution Credentials
 
-Reference implementation of **ERC-XXXX**, a minimal Guard primitive that
+Reference implementation of **ERC-1953**, a minimal Guard primitive that
 verifies a zero-knowledge proof and burns a nullifier at most once, as part of
 performing the action the capability authorized.
 

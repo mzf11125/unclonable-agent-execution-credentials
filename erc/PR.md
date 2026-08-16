@@ -39,42 +39,45 @@ All authors listed in the preamble have consented to CC0 licensing and to being 
 
 ## The number
 
-The `preamble-file-name` lint requires the filename to match the `eip` field, and
-the `ethereum/ERCs` convention is that the ERC number is the pull request number.
-That number does not exist until the PR is opened, so the files here are staged
-on a prediction.
+Settled. The draft PR is [ethereum/ERCs#1953](https://github.com/ethereum/ERCs/pull/1953),
+so the pull request number convention gives 1953, which is what
+`erc/erc-1953.md`, `erc/assets/erc-1953/` and the `eip:` field already used. No
+rename was needed.
 
-At the time of staging the highest number `ethereum/ERCs` had handed out was
-1952, dated 2026-08-15, so the next pull request lands on **1953**. That is what
-`erc/erc-1953.md` and `erc/assets/erc-1953/` use.
+The two domain separation tags are settled to match:
 
-The prediction is only correct if nobody else opens a pull request or an issue on
-that repository first. Check the PR URL the moment it is opened, and if the
-number differs, run the rename below.
+```solidity
+bytes32 constant NULLIFIER_TAG  = keccak256("ERC-1953/nullifier/v1");
+bytes32 constant CAPABILITY_TAG = keccak256("ERC-1953/capability/v1");
+```
+
+These are cryptographic domain separators. A Guard and a circuit that disagree
+on either string accept nothing and fail silently, so they are settled in one
+place and propagated everywhere: the proposal, the vendored assets,
+`src/libraries/CapabilityCommitment.sol`, the Noir circuit notes, and all four
+test files. `test_CommitmentParity` is the test that catches a mismatch.
+
+If an editor reassigns the number before merge, rerun this, which covers both
+repositories:
 
 ```bash
-# from the root of the ERCs fork, with N set to the real PR number
+# N is the reassigned number
 N=1953
 git mv ERCS/erc-1953.md "ERCS/erc-$N.md"
 git mv assets/erc-1953 "assets/erc-$N"
-sed -i "s/erc-1953/erc-$N/g; s/^eip: 1953$/eip: $N/" "ERCS/erc-$N.md"
-grep -n "1953" "ERCS/erc-$N.md"   # must print nothing
+sed -i "s/erc-1953/erc-$N/g; s/^eip: 1953$/eip: $N/; s/ERC-1953/ERC-$N/g" "ERCS/erc-$N.md"
+sed -i "s/ERC-1953/ERC-$N/g" "assets/erc-$N"/*.sol
+# then in the reference implementation repository
+grep -rl "ERC-1953" --include=*.sol --include=*.md --include=*.nr . \
+  | grep -vE '^\./(lib|out)/' | xargs sed -i "s/ERC-1953/ERC-$N/g"
+forge test
 ```
 
 ## Submission flow
 
-1. Fork `ethereum/ERCs` and branch. Copy `erc/erc-1953.md` to `ERCS/erc-1953.md`
-   and `erc/assets/erc-1953/` to `assets/erc-1953/`. Open the PR as a **draft**.
-2. Confirm the number, applying the rename above if it is not 1953, then run the
-   pre-push checks, force push, and mark the PR ready for review.
-
-The two domain tag constants still read `ERC-XXXX`. That is deliberate. The
-number is not final until the proposal merges, and baking a predicted number into
-a cryptographic domain separator now means changing a constant twice. Replace
-`ERC-XXXX` with the assigned number in the proposal, in this repository's
-`src/libraries/CapabilityCommitment.sol`, in the vendored assets copy, and in the
-test fixtures once the number is settled, then rerun `forge test`.
-`test_CommitmentParity` is the test that catches a mismatch.
+Done. Fork `mzf11125/mzf11125-ERCs`, branch
+`erc-unclonable-agent-execution-credentials`, opened as a draft against `master`.
+Mark the PR ready for review once CI is green.
 
 ## Pre-push checks
 
@@ -117,11 +120,13 @@ Verified against `config/eipw.toml` in `ethereum/ERCs` at master.
 * `requires: 6900, 7579, 8004` are all Draft, which a Draft proposal may require.
 * No smart quotes anywhere.
 
-One residual risk. `ERC-XXXX` appears inside code fences in the Constants
-section. The `markdown-no-backticks` lint forbids a proposal reference in
-backticks, but `ERC-XXXX` has no digits so it cannot match the pattern, and
-merged proposals including ERC-1155 and ERC-721 do carry proposal references
-inside code fences. Once the tag is replaced with the assigned number it does
-contain digits, so recheck at that point. If eipw flags it, change the tag to
-`unclonable-credential/nullifier/v1` and update
-`src/libraries/CapabilityCommitment.sol` and the fixtures to match.
+One thing to watch now that the tags carry a number. `ERC-1953` appears inside
+the Constants code fence, and `markdown-no-backticks` forbids a proposal
+reference in backticks. It targets inline code spans rather than fenced blocks,
+and merged proposals including ERC-1155, ERC-721 and ERC-6900 all carry proposal
+references inside fences, so this is expected to pass. Verified separately that
+no inline code span in the proposal contains a proposal reference, and that
+`ERC-1953` never appears as prose text, only inside asset link destinations and
+the code fence. If eipw flags it anyway, change both tags to
+`unclonable-credential/nullifier/v1` and `unclonable-credential/capability/v1`
+and propagate with the same command above.

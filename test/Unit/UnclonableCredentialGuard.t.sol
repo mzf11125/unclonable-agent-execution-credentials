@@ -6,6 +6,7 @@ import {IUnclonableCredential} from "src/interfaces/IUnclonableCredential.sol";
 import {UnclonableCredentialGuard} from "src/UnclonableCredentialGuard.sol";
 import {MockVerifier} from "src/mocks/MockVerifier.sol";
 import {DomainRegistry} from "src/libraries/DomainRegistry.sol";
+import {CapabilityCommitment} from "src/libraries/CapabilityCommitment.sol";
 
 contract UnclonableCredentialGuardTest is Test {
     uint256 constant HOME_DOMAIN_ID = 1;
@@ -22,12 +23,12 @@ contract UnclonableCredentialGuardTest is Test {
     ) internal view returns (IUnclonableCredential.Capability memory) {
         uint256 chainId = block.chainid;
         bytes32 nullifier = keccak256(
-            abi.encodePacked(keccak256("ERC-XXXX/nullifier/v1"), salt)
+            abi.encodePacked(keccak256("ERC-1953/nullifier/v1"), salt)
         );
         bytes32 actionCommitment = bytes32(uint256(0x42));
         bytes32 capabilityCommitment = keccak256(
             abi.encodePacked(
-                keccak256("ERC-XXXX/capability/v1"),
+                keccak256("ERC-1953/capability/v1"),
                 salt,
                 bytes32(agentId),
                 bytes32(chainId),
@@ -62,7 +63,7 @@ contract UnclonableCredentialGuardTest is Test {
     ) internal pure returns (bytes32) {
         return keccak256(
             abi.encodePacked(
-                keccak256("ERC-XXXX/capability/v1"),
+                keccak256("ERC-1953/capability/v1"),
                 salt,
                 bytes32(cap.agentId),
                 bytes32(cap.homeChainId),
@@ -151,18 +152,20 @@ contract UnclonableCredentialGuardTest is Test {
         guard.consume(cap, _proof());
     }
 
-    function test_CommitmentParity() public view {
+    /// @dev Parity between the library and the vectors written into the proposal. Both sides must
+    ///      be built independently or the test proves nothing: the expectation below is the literal
+    ///      from the spec, and the actual comes from CapabilityCommitment. That is what makes a
+    ///      drifted domain tag a failing test rather than a silent production mismatch, since a
+    ///      Guard and a circuit that disagree on a tag accept nothing.
+    function test_CommitmentParity() public pure {
         bytes32 salt = bytes32(uint256(7));
         uint256 agentId = 5;
         uint256 capabilityIndex = 3;
         bytes32 actionCommitment = bytes32(uint256(99));
-        IUnclonableCredential.Capability memory cap = _buildCapability(agentId, capabilityIndex, block.timestamp + 100, salt);
-        cap.actionCommitment = actionCommitment;
-        cap.capabilityCommitment = _recomputeCommitment(cap, salt);
 
-        bytes32 expected = keccak256(
+        bytes32 expectedCommitment = keccak256(
             abi.encodePacked(
-                keccak256("ERC-XXXX/capability/v1"),
+                keccak256("ERC-1953/capability/v1"),
                 salt,
                 bytes32(agentId),
                 bytes32(uint256(11155111)),
@@ -171,7 +174,36 @@ contract UnclonableCredentialGuardTest is Test {
                 actionCommitment
             )
         );
-        assertEq(cap.capabilityCommitment, expected);
+        assertEq(
+            CapabilityCommitment.computeCapabilityCommitment(
+                salt, agentId, 11155111, HOME_DOMAIN_ID, capabilityIndex, actionCommitment
+            ),
+            expectedCommitment,
+            "CAPABILITY_TAG or the commitment preimage drifted from the spec"
+        );
+
+        bytes32 expectedNullifier = keccak256(abi.encodePacked(keccak256("ERC-1953/nullifier/v1"), salt));
+        assertEq(
+            CapabilityCommitment.computeNullifier(salt),
+            expectedNullifier,
+            "NULLIFIER_TAG or the nullifier preimage drifted from the spec"
+        );
+    }
+
+    /// @dev The fixtures build capabilities by hand rather than through the library, so pin them to
+    ///      it too. Otherwise the fixtures and the library can drift apart and every other test in
+    ///      this file keeps passing against the wrong tag.
+    function test_FixtureParity() public view {
+        bytes32 salt = bytes32(uint256(1));
+        IUnclonableCredential.Capability memory cap = _buildCapability(1, 1, block.timestamp + 100, salt);
+        assertEq(cap.nullifier, CapabilityCommitment.computeNullifier(salt), "fixture nullifier drifted");
+        assertEq(
+            cap.capabilityCommitment,
+            CapabilityCommitment.computeCapabilityCommitment(
+                salt, cap.agentId, cap.homeChainId, cap.homeDomainId, cap.capabilityIndex, cap.actionCommitment
+            ),
+            "fixture commitment drifted"
+        );
     }
 
     function test_Composition_Placeholder() public {

@@ -1,4 +1,4 @@
-# ERC-XXXX: Unclonable Agent Execution Credentials
+# ERC-1953: Unclonable Agent Execution Credentials
 
 **Author:** Muhammad Zidan Fatonie (@mzf11125), Faisal Firdani (@zexoverz),
 Maulana Asykari Muhammad (@WeissCurry), Venkata ramana Komari (@Venkat5599)
@@ -10,12 +10,15 @@ in [`erc/`](./erc/).
 
 ## Status
 
-Draft. The submission ready markdown is
-[`erc/erc-1953.md`](./erc/erc-1953.md). Per the `ethereum/ERCs` convention the
-ERC number is the pull request number, and 1953 is the next number that
-repository will hand out. It is a prediction until the PR is actually opened, so
-verify it against the PR URL and rerun the rename in
-[`erc/PR.md`](./erc/PR.md) if it differs.
+Draft, submitted. Number 1953 assigned by the pull request number convention.
+
+* Proposal: [ethereum/ERCs#1953](https://github.com/ethereum/ERCs/pull/1953),
+  open as a draft.
+* Submission copy in this repository: [`erc/erc-1953.md`](./erc/erc-1953.md).
+
+The number is not final until the proposal merges. If an editor reassigns it,
+rerun the rename in [`erc/PR.md`](./erc/PR.md) and resettle the two domain tags
+below, because they carry the number.
 
 ## Update Log
 
@@ -30,7 +33,11 @@ verify it against the PR URL and rerun the rename in
   the grief burn.
 * 2026-08-17: Coupling promoted from a recommended profile to the normative
   core. Salt removed from the on chain `Capability` struct. Relayed submission
-  removed. Collision classification test added. ERC submission staged.
+  removed. Collision classification test added.
+* 2026-08-17: [ethereum/ERCs#1953](https://github.com/ethereum/ERCs/pull/1953)
+  opened as a draft. Domain separation tags settled from the `ERC-XXXX`
+  placeholder to `ERC-1953` across the spec, the circuit notes, the Guards, and
+  the fixtures.
 
 ## External Reviews
 
@@ -230,8 +237,8 @@ nullifier, regardless of chain.
 ### Constants
 
 ```
-NULLIFIER_TAG  = keccak256("ERC-XXXX/nullifier/v1")
-CAPABILITY_TAG = keccak256("ERC-XXXX/capability/v1")
+NULLIFIER_TAG  = keccak256("ERC-1953/nullifier/v1")
+CAPABILITY_TAG = keccak256("ERC-1953/capability/v1")
 ```
 
 ### Capability Struct

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-/// @notice Hash helpers for ERC-XXXX Noir circuit.
+/// @notice Hash helpers for ERC-1953 Noir circuit.
 /// @dev The actual primitive depends on the open question resolution.
 ///      For M1, keccak256 in-circuit is recommended.
 pub fn nullifier(salt: Field) -> Field {

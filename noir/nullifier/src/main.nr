@@ -1,6 +1,6 @@
 use dep::std;
 
-/// @notice Nullifier circuit for ERC-XXXX.
+/// @notice Nullifier circuit for ERC-1953.
 /// @dev Public inputs are passed in the exact order defined by the spec:
 ///   [0] capability_commitment
 ///   [1] agent_id
