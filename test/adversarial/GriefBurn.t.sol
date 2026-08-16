@@ -36,7 +36,6 @@ contract AdversarialGriefBurnTest is Fixtures {
             )
         );
         return IUnclonableCredential.Capability({
-            salt: salt,
             nullifier: nullifier,
             capabilityCommitment: commitment,
             agentId: 1,

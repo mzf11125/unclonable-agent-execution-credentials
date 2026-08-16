@@ -64,7 +64,6 @@ contract CoupledCredentialGuardTest is Test {
             )
         );
         return IUnclonableCredential.Capability({
-            salt: salt,
             nullifier: nullifier,
             capabilityCommitment: commitment,
             agentId: 1,
@@ -96,7 +95,7 @@ contract CoupledCredentialGuardTest is Test {
         IUnclonableCredential.Capability memory grief = _cap(0, address(other), runData);
         vm.prank(agentExecutor);
         vm.expectRevert(
-            abi.encodeWithSelector(CoupledCredentialGuard.CommitmentNotIssued.selector, grief.capabilityCommitment)
+            abi.encodeWithSelector(IUnclonableCredential.CommitmentNotIssued.selector, grief.capabilityCommitment)
         );
         guard.execute(grief, _proof(), address(other), runData);
 
@@ -127,9 +126,40 @@ contract CoupledCredentialGuardTest is Test {
         assertEq(target.runs(), 1, "authorized action executed exactly once");
 
         vm.prank(agentExecutor);
-        vm.expectRevert(abi.encodeWithSelector(CoupledCredentialGuard.CredentialAlreadySpent.selector, cap.nullifier));
+        vm.expectRevert(abi.encodeWithSelector(IUnclonableCredential.CredentialAlreadySpent.selector, cap.nullifier));
         guard.execute(cap, _proof(), address(target), runData);
         assertEq(target.runs(), 1, "still exactly once, done not dead");
+    }
+
+    /// A revert cannot emit, so observability is the burn event on the accepting path plus the
+    /// named error on the rejecting one. `highestIssuedIndex` is what turns that error into a
+    /// diagnosis: a collision at an index the orchestrator never issued is a clone, one at an index
+    /// it did issue is its own reissue bug. Without it both look identical to an operator.
+    function test_Coupled_CollisionIsClassifiable() public {
+        IUnclonableCredential.Capability memory cap = _cap(0, address(target), runData);
+        _issue(cap);
+
+        vm.expectEmit(true, true, false, true, address(guard));
+        emit IUnclonableCredential.NullifierBurned(cap.nullifier, cap.agentId, cap.capabilityIndex, cap.actionCommitment);
+        vm.prank(agentExecutor);
+        guard.execute(cap, _proof(), address(target), runData);
+
+        // The collision lands on index 0, which the orchestrator did issue, so this is a reissue
+        // bug on its own side rather than evidence of a clone.
+        assertEq(guard.highestIssuedIndex(cap.agentId), 0);
+        vm.prank(agentExecutor);
+        vm.expectRevert(abi.encodeWithSelector(IUnclonableCredential.CredentialAlreadySpent.selector, cap.nullifier));
+        guard.execute(cap, _proof(), address(target), runData);
+
+        // An index beyond the highest issued cannot even reach the spent check, because the
+        // commitment was never issued. That is the clone signature.
+        IUnclonableCredential.Capability memory unissued = _cap(7, address(target), runData);
+        assertGt(unissued.capabilityIndex, guard.highestIssuedIndex(unissued.agentId));
+        vm.prank(agentExecutor);
+        vm.expectRevert(
+            abi.encodeWithSelector(IUnclonableCredential.CommitmentNotIssued.selector, unissued.capabilityCommitment)
+        );
+        guard.execute(unissued, _proof(), address(target), runData);
     }
 
     /// Recovery is the next index. A burned index stays burned; reauthorize at index + 1.

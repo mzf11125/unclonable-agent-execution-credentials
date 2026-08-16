@@ -6,9 +6,11 @@ import {UnclonableCredentialGuard} from "./UnclonableCredentialGuard.sol";
 import {DomainRegistry} from "./libraries/DomainRegistry.sol";
 import {IVerifier} from "./verifier/IVerifier.sol";
 
-/// @title GuardedAgentExecutor — Example Consumer
-/// @notice Demonstrates how to integrate UnclonableCredentialGuard into
-///         a workflow. Not audited. For reference only.
+/// @title GuardedAgentExecutor
+/// @notice NOT NORMATIVE. An external wrapper around the separable `consume`, kept as the
+///         counter-example. Checking the action commitment here does not help, because the Guard
+///         still burns on its own call and nothing forces this wrapper to be the caller. The
+///         normative Guard performs the action itself. Not audited. For reference only.
 contract GuardedAgentExecutor {
     UnclonableCredentialGuard public immutable guard;
 

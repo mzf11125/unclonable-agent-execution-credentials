@@ -38,7 +38,6 @@ contract Fixtures is Test {
             )
         );
         return IUnclonableCredential.Capability({
-            salt: salt,
             nullifier: nullifier,
             capabilityCommitment: capabilityCommitment,
             agentId: agentId,

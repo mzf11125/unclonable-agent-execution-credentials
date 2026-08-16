@@ -37,7 +37,6 @@ contract UnclonableCredentialGuardTest is Test {
             )
         );
         return IUnclonableCredential.Capability({
-            salt: salt,
             nullifier: nullifier,
             capabilityCommitment: capabilityCommitment,
             agentId: agentId,
@@ -54,13 +53,17 @@ contract UnclonableCredentialGuardTest is Test {
         return abi.encodePacked("proof");
     }
 
+    /// @dev The salt is passed alongside the capability rather than read from it. It is a private
+    ///      witness of the circuit and is deliberately not a struct field, so a test that wants to
+    ///      recompute a commitment has to hold the salt itself, exactly as an issuer does.
     function _recomputeCommitment(
-        IUnclonableCredential.Capability memory cap
+        IUnclonableCredential.Capability memory cap,
+        bytes32 salt
     ) internal pure returns (bytes32) {
         return keccak256(
             abi.encodePacked(
                 keccak256("ERC-XXXX/capability/v1"),
-                cap.salt,
+                salt,
                 bytes32(cap.agentId),
                 bytes32(cap.homeChainId),
                 bytes32(cap.homeDomainId),
@@ -101,7 +104,7 @@ contract UnclonableCredentialGuardTest is Test {
     function test_WrongChain_Reverts() public {
         IUnclonableCredential.Capability memory cap = _buildCapability(1, 1, block.timestamp + 100, bytes32(uint256(1)));
         cap.homeChainId = 2;
-        cap.capabilityCommitment = _recomputeCommitment(cap);
+        cap.capabilityCommitment = _recomputeCommitment(cap, bytes32(uint256(1)));
         vm.expectRevert("UAC: wrong chain");
         guard.consume(cap, _proof());
     }
@@ -115,16 +118,22 @@ contract UnclonableCredentialGuardTest is Test {
     function test_ExecutorMismatch_Reverts() public {
         IUnclonableCredential.Capability memory cap = _buildCapability(1, 1, block.timestamp + 100, bytes32(uint256(1)));
         cap.executor = address(0xbeef);
-        cap.capabilityCommitment = _recomputeCommitment(cap);
+        cap.capabilityCommitment = _recomputeCommitment(cap, bytes32(uint256(1)));
         vm.prank(address(0xdead));
         vm.expectRevert("UAC: executor mismatch");
         guard.consume(cap, _proof());
     }
 
-    function test_RelayedSubmit_Succeeds() public {
+    /// @dev The normative Guard has no relayed path. A relayer holding a valid capability and a
+    ///      valid proof still cannot burn it, because check 4 is a strict sender equality. This
+    ///      pins that behaviour so a future relayed extension has to be added deliberately rather
+    ///      than by accident.
+    function test_RelayedSubmit_Reverts() public {
         IUnclonableCredential.Capability memory cap = _buildCapability(1, 1, block.timestamp + 100, bytes32(uint256(1)));
+        vm.prank(address(0xbeef01));
+        vm.expectRevert("UAC: executor mismatch");
         guard.consume(cap, _proof());
-        assertTrue(guard.isConsumed(cap.nullifier));
+        assertFalse(guard.isConsumed(cap.nullifier));
     }
 
     function test_FrontRun_LiftedProof_Reverts() public {
@@ -137,7 +146,7 @@ contract UnclonableCredentialGuardTest is Test {
     function test_UnregisteredDomain_Reverts() public {
         IUnclonableCredential.Capability memory cap = _buildCapability(1, 1, block.timestamp + 100, bytes32(uint256(1)));
         cap.homeDomainId = 2;
-        cap.capabilityCommitment = _recomputeCommitment(cap);
+        cap.capabilityCommitment = _recomputeCommitment(cap, bytes32(uint256(1)));
         vm.expectRevert("UAC: domain invalid");
         guard.consume(cap, _proof());
     }
@@ -149,7 +158,7 @@ contract UnclonableCredentialGuardTest is Test {
         bytes32 actionCommitment = bytes32(uint256(99));
         IUnclonableCredential.Capability memory cap = _buildCapability(agentId, capabilityIndex, block.timestamp + 100, salt);
         cap.actionCommitment = actionCommitment;
-        cap.capabilityCommitment = _recomputeCommitment(cap);
+        cap.capabilityCommitment = _recomputeCommitment(cap, salt);
 
         bytes32 expected = keccak256(
             abi.encodePacked(
