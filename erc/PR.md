@@ -110,6 +110,16 @@ Verified against `config/eipw.toml` in `ethereum/ERCs` at master.
   only in the PR body.
 * All proposal links use `./eip-N.md`, never `./erc-N.md`, which is the form the
   merged corpus resolves. Every first mention of a proposal is a link.
+* Asset links use `../assets/eip-N/`, never `../assets/erc-N/`, while the
+  directory committed to the repository stays `assets/erc-N/`. The `Merge Repos`
+  step in `ci.yml` renames every `assets/erc-*` directory to `assets/eip-*` and
+  every `ERCS/erc-N.md` to `EIPS/eip-N.md` before Jekyll builds, so a link
+  written with the `erc-` prefix points at a directory that no longer exists by
+  the time HTMLProofer runs. 209 of the 210 asset directories in the repository
+  are named `erc-*` on disk and 499 of 499 asset links in merged proposals are
+  written `eip-*`, which is the rule. This was caught by CI on the first run
+  rather than by review, and is verified locally now by reproducing the rename
+  before pushing.
 * No external links in the body. The arXiv paper is cited with a `csl-json`
   block carrying a DOI and URL, and the reference implementation is vendored
   into assets.
