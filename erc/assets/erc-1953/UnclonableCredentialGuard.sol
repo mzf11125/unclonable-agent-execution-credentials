@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.0;
 
-import {IUnclonableCredential} from "./interfaces/IUnclonableCredential.sol";
-import {IVerifier} from "./verifier/IVerifier.sol";
-import {DomainRegistry} from "./libraries/DomainRegistry.sol";
-import {CapabilityCommitment} from "./libraries/CapabilityCommitment.sol";
+import {IUnclonableCredential} from "./IUnclonableCredential.sol";
+import {IVerifier} from "./IVerifier.sol";
+import {DomainRegistry} from "./DomainRegistry.sol";
+import {CapabilityCommitment} from "./CapabilityCommitment.sol";
 
 /// @title UnclonableCredentialGuard
 /// @notice NOT NORMATIVE. The earlier separable form, where the burn is its own call. Retained

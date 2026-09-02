@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity ^0.8.0;
 
-import {IUnclonableCredential} from "./interfaces/IUnclonableCredential.sol";
-import {IVerifier} from "./verifier/IVerifier.sol";
-import {DomainRegistry} from "./libraries/DomainRegistry.sol";
+import {IUnclonableCredential} from "./IUnclonableCredential.sol";
+import {IVerifier} from "./IVerifier.sol";
+import {DomainRegistry} from "./DomainRegistry.sol";
 
 /// @title CoupledCredentialGuard
 /// @notice The normative core. Answers the adversarial vectors on

@@ -9,8 +9,8 @@ import {IUnclonableCredential} from "src/interfaces/IUnclonableCredential.sol";
 ///         `consume` requires no issuance and the nullifier is action-independent, so a clone that
 ///         holds the salt can burn the capability on an action of its choosing.
 contract AdversarialGriefBurnTest is Fixtures {
-    bytes32 internal constant CAP_TAG = keccak256("ERC-XXXX/capability/v1");
-    bytes32 internal constant NULL_TAG = keccak256("ERC-XXXX/nullifier/v1");
+    bytes32 internal constant CAP_TAG = keccak256("ERC-1953/capability/v1");
+    bytes32 internal constant NULL_TAG = keccak256("ERC-1953/nullifier/v1");
 
     bytes32 internal constant REAL_ACTION = bytes32(uint256(0x42));
     bytes32 internal constant NULL_ACTION = bytes32(0);
@@ -24,6 +24,7 @@ contract AdversarialGriefBurnTest is Fixtures {
     function _cap(uint256 index, bytes32 action) internal view returns (IUnclonableCredential.Capability memory) {
         bytes32 salt = keccak256(abi.encode("salt", index));
         bytes32 nullifier = keccak256(abi.encodePacked(NULL_TAG, salt));
+        uint256 expiry = block.timestamp + 1 days;
         bytes32 commitment = keccak256(
             abi.encodePacked(
                 CAP_TAG,
@@ -32,11 +33,12 @@ contract AdversarialGriefBurnTest is Fixtures {
                 bytes32(uint256(CHAIN_ID)),
                 bytes32(HOME_DOMAIN_ID),
                 bytes32(index),
-                action
+                action,
+                bytes32(uint256(uint160(address(this)))),
+                bytes32(expiry)
             )
         );
         return IUnclonableCredential.Capability({
-            salt: salt,
             nullifier: nullifier,
             capabilityCommitment: commitment,
             agentId: 1,
@@ -45,7 +47,7 @@ contract AdversarialGriefBurnTest is Fixtures {
             capabilityIndex: index,
             actionCommitment: action,
             executor: address(this),
-            expiry: block.timestamp + 1 days
+            expiry: expiry
         });
     }
 

@@ -7,7 +7,7 @@ import {UnclonableCredentialGuard} from "src/UnclonableCredentialGuard.sol";
 import {MockVerifier} from "src/mocks/MockVerifier.sol";
 import {DomainRegistry} from "src/libraries/DomainRegistry.sol";
 
-/// @notice Shared fixtures for ERC-XXXX tests.
+/// @notice Shared fixtures for ERC-1953 tests.
 contract Fixtures is Test {
     uint256 constant CHAIN_ID = 11155111; // Sepolia
     uint256 constant HOME_DOMAIN_ID = 1;
@@ -23,22 +23,23 @@ contract Fixtures is Test {
         bytes32 salt
     ) internal view returns (IUnclonableCredential.Capability memory) {
         bytes32 nullifier = keccak256(
-            abi.encodePacked(keccak256("ERC-XXXX/nullifier/v1"), salt)
+            abi.encodePacked(keccak256("ERC-1953/nullifier/v1"), salt)
         );
         bytes32 actionCommitment = bytes32(uint256(0x42));
         bytes32 capabilityCommitment = keccak256(
             abi.encodePacked(
-                keccak256("ERC-XXXX/capability/v1"),
+                keccak256("ERC-1953/capability/v1"),
                 salt,
                 bytes32(agentId),
                 bytes32(uint256(CHAIN_ID)),
                 bytes32(HOME_DOMAIN_ID),
                 bytes32(capabilityIndex),
-                actionCommitment
+                actionCommitment,
+                bytes32(uint256(uint160(address(this)))),
+                bytes32(expiry)
             )
         );
         return IUnclonableCredential.Capability({
-            salt: salt,
             nullifier: nullifier,
             capabilityCommitment: capabilityCommitment,
             agentId: agentId,
@@ -60,6 +61,19 @@ contract Fixtures is Test {
     ) internal view returns (IUnclonableCredential.Capability memory) {
         IUnclonableCredential.Capability memory cap = _buildCapability(agentId, capabilityIndex, expiry, salt);
         cap.executor = executor;
+        cap.capabilityCommitment = keccak256(
+            abi.encodePacked(
+                keccak256("ERC-1953/capability/v1"),
+                salt,
+                bytes32(agentId),
+                bytes32(uint256(CHAIN_ID)),
+                bytes32(HOME_DOMAIN_ID),
+                bytes32(capabilityIndex),
+                cap.actionCommitment,
+                bytes32(uint256(uint160(executor))),
+                bytes32(expiry)
+            )
+        );
         return cap;
     }
 
@@ -69,7 +83,7 @@ contract Fixtures is Test {
 
     function _setUp() internal {
         domainRegistry = new DomainRegistry();
-        domainRegistry.registerDomain(HOME_DOMAIN_ID);
+        domainRegistry.registerDomain(HOME_DOMAIN_ID, address(this));
         verifier = new MockVerifier();
         guard = new UnclonableCredentialGuard(address(verifier), address(domainRegistry));
     }

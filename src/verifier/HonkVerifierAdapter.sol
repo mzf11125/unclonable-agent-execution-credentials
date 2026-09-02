@@ -14,13 +14,13 @@ contract HonkVerifierAdapter is IVerifier {
         verifier = IVerifier(_verifier);
     }
 
-    /// @notice Build the 8 public inputs expected by the Noir circuit
+    /// @notice Build the 9 public inputs expected by the Noir circuit
     /// @dev Order: [capabilityCommitment, agentId, homeChainId, homeDomainId,
-    ///         capabilityIndex, actionCommitment, executor, expiry]
+    ///         capabilityIndex, actionCommitment, executor, expiry, nullifier]
     function _buildPublicInputs(
         IUnclonableCredential.Capability calldata cap
     ) internal pure returns (bytes32[] memory) {
-        bytes32[] memory inputs = new bytes32[](8);
+        bytes32[] memory inputs = new bytes32[](9);
         inputs[0] = cap.capabilityCommitment;
         inputs[1] = bytes32(uint256(cap.agentId));
         inputs[2] = bytes32(uint256(cap.homeChainId));
@@ -29,6 +29,7 @@ contract HonkVerifierAdapter is IVerifier {
         inputs[5] = cap.actionCommitment;
         inputs[6] = bytes32(uint256(uint160(cap.executor)));
         inputs[7] = bytes32(uint256(cap.expiry));
+        inputs[8] = cap.nullifier;
         return inputs;
     }
 
