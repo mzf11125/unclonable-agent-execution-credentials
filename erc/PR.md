@@ -26,7 +26,7 @@ That thread ran for two weeks and changed the design three times. The substantiv
 - The security claim is stated as at most once with no ordering, not exactly once. Two holders of the same salt race and the Guard cannot rank them.
 - Aggregate spend per identity is named as a separate layer and explicitly out of scope.
 
-The reference implementation lives at https://github.com/mzf11125/unclonable-agent-execution-credentials and the Solidity sources are also vendored into `assets/erc-1953/`, so the proposal body carries no external links. Twenty-four Foundry tests cover the cases in the Test Cases section, including the adversarial vectors from the thread.
+The reference implementation lives at https://github.com/mzf11125/unclonable-agent-execution-credentials and the Solidity sources are also vendored into `assets/erc-8380/`, so the proposal body carries no external links. Twenty-four Foundry tests cover the cases in the Test Cases section, including the adversarial vectors from the thread.
 
 Known open questions, stated rather than hidden:
 
@@ -39,37 +39,44 @@ All authors listed in the preamble have consented to CC0 licensing and to being 
 
 ## The number
 
-Settled. The draft PR is [ethereum/ERCs#1953](https://github.com/ethereum/ERCs/pull/1953),
-so the pull request number convention gives 1953, which is what
-`erc/erc-1953.md`, `erc/assets/erc-1953/` and the `eip:` field already used. No
-rename was needed.
+Reassigned. The PR opened at [ethereum/ERCs#1953](https://github.com/ethereum/ERCs/pull/1953)
+kept 1953 in its URL, since a GitHub PR number is immutable once opened, but an
+ERC editor reassigned the actual proposal number to **8380** on the ERCs side
+before this repository picked it up. `erc/erc-1953.md`, `erc/assets/erc-1953/`,
+and both domain separation tags were still on the old number here until
+2026-09-03, when this repository was reconciled against the current state of
+`mzf11125/mzf11125-ERCs` (the PR's fork/branch): the rename below was run, and
+the nullifier/executor/expiry binding fix already merged there on 2026-08-29
+was cross-checked against this repository's independently-derived version of
+the same fix (functionally identical) rather than reapplied.
 
 The two domain separation tags are settled to match:
 
 ```solidity
-bytes32 constant NULLIFIER_TAG  = keccak256("ERC-1953/nullifier/v1");
-bytes32 constant CAPABILITY_TAG = keccak256("ERC-1953/capability/v1");
+bytes32 constant NULLIFIER_TAG  = keccak256("ERC-8380/nullifier/v1");
+bytes32 constant CAPABILITY_TAG = keccak256("ERC-8380/capability/v1");
 ```
 
 These are cryptographic domain separators. A Guard and a circuit that disagree
 on either string accept nothing and fail silently, so they are settled in one
 place and propagated everywhere: the proposal, the vendored assets,
 `src/libraries/CapabilityCommitment.sol`, the Noir circuit notes, and all four
-test files. `test_CommitmentParity` is the test that catches a mismatch.
+test files. `test_CommitmentParity` is the test that catches a mismatch, and is
+now pinned against the officially published parity digests as well.
 
-If an editor reassigns the number before merge, rerun this, which covers both
-repositories:
+If an editor reassigns the number again before merge, rerun this, which covers
+both repositories:
 
 ```bash
 # N is the reassigned number
-N=1953
-git mv ERCS/erc-1953.md "ERCS/erc-$N.md"
-git mv assets/erc-1953 "assets/erc-$N"
-sed -i "s/erc-1953/erc-$N/g; s/^eip: 1953$/eip: $N/; s/ERC-1953/ERC-$N/g" "ERCS/erc-$N.md"
-sed -i "s/ERC-1953/ERC-$N/g" "assets/erc-$N"/*.sol
+N=8380
+git mv ERCS/erc-8380.md "ERCS/erc-$N.md"
+git mv assets/erc-8380 "assets/erc-$N"
+sed -i "s/erc-8380/erc-$N/g; s/^eip: 8380$/eip: $N/; s/ERC-8380/ERC-$N/g" "ERCS/erc-$N.md"
+sed -i "s/ERC-8380/ERC-$N/g" "assets/erc-$N"/*.sol
 # then in the reference implementation repository
-grep -rl "ERC-1953" --include=*.sol --include=*.md --include=*.nr . \
-  | grep -vE '^\./(lib|out)/' | xargs sed -i "s/ERC-1953/ERC-$N/g"
+grep -rl "ERC-8380" --include=*.sol --include=*.md --include=*.nr . \
+  | grep -vE '^\./(lib|out)/' | xargs sed -i "s/ERC-8380/ERC-$N/g"
 forge test
 ```
 
@@ -130,13 +137,13 @@ Verified against `config/eipw.toml` in `ethereum/ERCs` at master.
 * `requires: 6900, 7579, 8004` are all Draft, which a Draft proposal may require.
 * No smart quotes anywhere.
 
-One thing to watch now that the tags carry a number. `ERC-1953` appears inside
+One thing to watch now that the tags carry a number. `ERC-8380` appears inside
 the Constants code fence, and `markdown-no-backticks` forbids a proposal
 reference in backticks. It targets inline code spans rather than fenced blocks,
 and merged proposals including ERC-1155, ERC-721 and ERC-6900 all carry proposal
 references inside fences, so this is expected to pass. Verified separately that
 no inline code span in the proposal contains a proposal reference, and that
-`ERC-1953` never appears as prose text, only inside asset link destinations and
+`ERC-8380` never appears as prose text, only inside asset link destinations and
 the code fence. If eipw flags it anyway, change both tags to
 `unclonable-credential/nullifier/v1` and `unclonable-credential/capability/v1`
 and propagate with the same command above.

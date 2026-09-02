@@ -22,8 +22,8 @@ contract MockTarget {
 contract CoupledCredentialGuardTest is Test {
     uint256 internal constant CHAIN_ID = 11155111;
     uint256 internal constant HOME_DOMAIN_ID = 1;
-    bytes32 internal constant CAP_TAG = keccak256("ERC-1953/capability/v1");
-    bytes32 internal constant NULL_TAG = keccak256("ERC-1953/nullifier/v1");
+    bytes32 internal constant CAP_TAG = keccak256("ERC-8380/capability/v1");
+    bytes32 internal constant NULL_TAG = keccak256("ERC-8380/nullifier/v1");
 
     DomainRegistry internal domainRegistry;
     MockVerifier internal verifier;

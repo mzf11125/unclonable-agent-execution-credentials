@@ -2,7 +2,7 @@ use dep::std;
 
 mod hash;
 
-/// @notice Nullifier circuit for ERC-1953.
+/// @notice Nullifier circuit for ERC-8380.
 /// @dev Public inputs are passed in the exact order defined by the spec:
 ///   [0] capability_commitment
 ///   [1] agent_id

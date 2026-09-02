@@ -7,7 +7,7 @@ import {UnclonableCredentialGuard} from "src/UnclonableCredentialGuard.sol";
 import {MockVerifier} from "src/mocks/MockVerifier.sol";
 import {DomainRegistry} from "src/libraries/DomainRegistry.sol";
 
-/// @notice Shared fixtures for ERC-1953 tests.
+/// @notice Shared fixtures for ERC-8380 tests.
 contract Fixtures is Test {
     uint256 constant CHAIN_ID = 11155111; // Sepolia
     uint256 constant HOME_DOMAIN_ID = 1;
@@ -23,12 +23,12 @@ contract Fixtures is Test {
         bytes32 salt
     ) internal view returns (IUnclonableCredential.Capability memory) {
         bytes32 nullifier = keccak256(
-            abi.encodePacked(keccak256("ERC-1953/nullifier/v1"), salt)
+            abi.encodePacked(keccak256("ERC-8380/nullifier/v1"), salt)
         );
         bytes32 actionCommitment = bytes32(uint256(0x42));
         bytes32 capabilityCommitment = keccak256(
             abi.encodePacked(
-                keccak256("ERC-1953/capability/v1"),
+                keccak256("ERC-8380/capability/v1"),
                 salt,
                 bytes32(agentId),
                 bytes32(uint256(CHAIN_ID)),
@@ -63,7 +63,7 @@ contract Fixtures is Test {
         cap.executor = executor;
         cap.capabilityCommitment = keccak256(
             abi.encodePacked(
-                keccak256("ERC-1953/capability/v1"),
+                keccak256("ERC-8380/capability/v1"),
                 salt,
                 bytes32(agentId),
                 bytes32(uint256(CHAIN_ID)),

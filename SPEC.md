@@ -1,4 +1,4 @@
-# ERC-1953: Unclonable Agent Execution Credentials
+# ERC-8380: Unclonable Agent Execution Credentials
 
 **Author:** Muhammad Zidan Fatonie (@mzf11125), Faisal Firdani (@zexoverz),
 Maulana Asykari Muhammad (@WeissCurry), Venkata ramana Komari (@Venkat5599)
@@ -10,15 +10,18 @@ in [`erc/`](./erc/).
 
 ## Status
 
-Draft, submitted. Number 1953 assigned by the pull request number convention.
+Draft, submitted. Initially numbered 1953 by the pull request number
+convention, then reassigned to 8380 by an ERC editor. The pull request itself
+keeps number 1953 in its URL, since a GitHub PR number is immutable once
+opened; only the assigned ERC number changed.
 
 * Proposal: [ethereum/ERCs#1953](https://github.com/ethereum/ERCs/pull/1953),
   open as a draft.
-* Submission copy in this repository: [`erc/erc-1953.md`](./erc/erc-1953.md).
+* Submission copy in this repository: [`erc/erc-8380.md`](./erc/erc-8380.md).
 
-The number is not final until the proposal merges. If an editor reassigns it,
-rerun the rename in [`erc/PR.md`](./erc/PR.md) and resettle the two domain tags
-below, because they carry the number.
+The number is not final until the proposal merges. If an editor reassigns it
+again, rerun the rename in [`erc/PR.md`](./erc/PR.md) and resettle the two
+domain tags below, because they carry the number.
 
 ## Update Log
 
@@ -42,6 +45,13 @@ below, because they carry the number.
   `(agentId, homeDomainId)`; `nullifier`, `executor`, and `expiry` folded into
   the constrained public-input/commitment surface, closing the
   unconstrained-nullifier and commitment-preimage gaps found in public review.
+* 2026-09-03: Reconciled with [ethereum/ERCs#1953](https://github.com/ethereum/ERCs/pull/1953),
+  which had been reassigned from ERC-1953 to ERC-8380 and had independently
+  received the same nullifier/executor/expiry binding fix on 2026-08-29. Both
+  domain separation tags, the spec filename, and every cross-reference in this
+  repository are resettled to `ERC-8380`, and the commitment-parity vector now
+  matches the officially published one so the digest is checkable against a
+  second, independently maintained implementation.
 
 ## External Reviews
 
@@ -238,8 +248,8 @@ nullifier, regardless of chain.
 ### Constants
 
 ```
-NULLIFIER_TAG  = keccak256("ERC-1953/nullifier/v1")
-CAPABILITY_TAG = keccak256("ERC-1953/capability/v1")
+NULLIFIER_TAG  = keccak256("ERC-8380/nullifier/v1")
+CAPABILITY_TAG = keccak256("ERC-8380/capability/v1")
 ```
 
 ### Capability Struct

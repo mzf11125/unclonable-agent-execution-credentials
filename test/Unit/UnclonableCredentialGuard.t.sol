@@ -23,12 +23,12 @@ contract UnclonableCredentialGuardTest is Test {
     ) internal view returns (IUnclonableCredential.Capability memory) {
         uint256 chainId = block.chainid;
         bytes32 nullifier = keccak256(
-            abi.encodePacked(keccak256("ERC-1953/nullifier/v1"), salt)
+            abi.encodePacked(keccak256("ERC-8380/nullifier/v1"), salt)
         );
         bytes32 actionCommitment = bytes32(uint256(0x42));
         bytes32 capabilityCommitment = keccak256(
             abi.encodePacked(
-                keccak256("ERC-1953/capability/v1"),
+                keccak256("ERC-8380/capability/v1"),
                 salt,
                 bytes32(agentId),
                 bytes32(chainId),
@@ -65,7 +65,7 @@ contract UnclonableCredentialGuardTest is Test {
     ) internal pure returns (bytes32) {
         return keccak256(
             abi.encodePacked(
-                keccak256("ERC-1953/capability/v1"),
+                keccak256("ERC-8380/capability/v1"),
                 salt,
                 bytes32(cap.agentId),
                 bytes32(cap.homeChainId),
@@ -166,12 +166,12 @@ contract UnclonableCredentialGuardTest is Test {
         uint256 agentId = 5;
         uint256 capabilityIndex = 3;
         bytes32 actionCommitment = bytes32(uint256(99));
-        address executor = address(0x000000000000000000000000000000000000dEaD);
-        uint256 expiry = 2000000000;
+        address executor = address(1);
+        uint256 expiry = 1900000000;
 
         bytes32 expectedCommitment = keccak256(
             abi.encodePacked(
-                keccak256("ERC-1953/capability/v1"),
+                keccak256("ERC-8380/capability/v1"),
                 salt,
                 bytes32(agentId),
                 bytes32(uint256(11155111)),
@@ -190,11 +190,25 @@ contract UnclonableCredentialGuardTest is Test {
             "CAPABILITY_TAG or the commitment preimage drifted from the spec"
         );
 
-        bytes32 expectedNullifier = keccak256(abi.encodePacked(keccak256("ERC-1953/nullifier/v1"), salt));
+        // Pinned against the digests published in the ERC-8380 Test Cases vector, so a drift in
+        // either this repo or the spec's own vector shows up as a failure here rather than only
+        // as a silent mismatch between the two.
+        assertEq(
+            expectedCommitment,
+            bytes32(0x0ca20742a17fa240d3abf6146f61981ee649b937a992f87bb599c1c1899f88cf),
+            "commitment vector drifted from the published spec digest"
+        );
+
+        bytes32 expectedNullifier = keccak256(abi.encodePacked(keccak256("ERC-8380/nullifier/v1"), salt));
         assertEq(
             CapabilityCommitment.computeNullifier(salt),
             expectedNullifier,
             "NULLIFIER_TAG or the nullifier preimage drifted from the spec"
+        );
+        assertEq(
+            expectedNullifier,
+            bytes32(0x387e1b17665773c440b8c1e1091763c9b9c2d2733eeaeaf1fdac1d17aa957338),
+            "nullifier vector drifted from the published spec digest"
         );
     }
 

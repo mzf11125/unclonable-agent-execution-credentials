@@ -9,8 +9,8 @@ import {IUnclonableCredential} from "src/interfaces/IUnclonableCredential.sol";
 ///         `consume` requires no issuance and the nullifier is action-independent, so a clone that
 ///         holds the salt can burn the capability on an action of its choosing.
 contract AdversarialGriefBurnTest is Fixtures {
-    bytes32 internal constant CAP_TAG = keccak256("ERC-1953/capability/v1");
-    bytes32 internal constant NULL_TAG = keccak256("ERC-1953/nullifier/v1");
+    bytes32 internal constant CAP_TAG = keccak256("ERC-8380/capability/v1");
+    bytes32 internal constant NULL_TAG = keccak256("ERC-8380/nullifier/v1");
 
     bytes32 internal constant REAL_ACTION = bytes32(uint256(0x42));
     bytes32 internal constant NULL_ACTION = bytes32(0);

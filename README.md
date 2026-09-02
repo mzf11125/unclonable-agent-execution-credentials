@@ -1,16 +1,17 @@
 <div align="center">
-    <img width="800" height="240" alt="ERC-1953 Unclonable Agent Execution Credentials" src="https://via.placeholder.com/800x240/000000/FFFFFF?text=ERC-1953+Unclonable+Agent+Execution+Credentials" />
+    <img width="800" height="240" alt="ERC-8380 Unclonable Agent Execution Credentials" src="https://via.placeholder.com/800x240/000000/FFFFFF?text=ERC-8380+Unclonable+Agent+Execution+Credentials" />
 </div>
 
 # Unclonable Agent Execution Credentials
 
-Reference implementation of **ERC-1953**, a minimal Guard primitive that
+Reference implementation of **ERC-8380**, a minimal Guard primitive that
 verifies a zero-knowledge proof and burns a nullifier at most once, as part of
 performing the action the capability authorized.
 
 ## Status
 
-Draft. No ERC number assigned. See [SPEC.md](./SPEC.md) for the working spec and
+Draft, submitted as [ethereum/ERCs#1953](https://github.com/ethereum/ERCs/pull/1953)
+(reassigned number 8380). See [SPEC.md](./SPEC.md) for the working spec and
 the discussion log, and [`erc/`](./erc/) for the submission ready proposal.
 
 The normative Guard is
@@ -51,9 +52,9 @@ nargo compile
 ├── README.md
 ├── LICENSE
 ├── erc/
-│   ├── erc-1953.md                    # submission ready proposal
+│   ├── erc-8380.md                    # submission ready proposal
 │   ├── PR.md                          # PR title, body, and submission steps
-│   └── assets/erc-1953/               # sources vendored for the ERC assets dir
+│   └── assets/erc-8380/               # sources vendored for the ERC assets dir
 ├── src/
 │   ├── interfaces/
 │   │   └── IUnclonableCredential.sol   # normative interface
