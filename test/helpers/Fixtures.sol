@@ -34,7 +34,9 @@ contract Fixtures is Test {
                 bytes32(uint256(CHAIN_ID)),
                 bytes32(HOME_DOMAIN_ID),
                 bytes32(capabilityIndex),
-                actionCommitment
+                actionCommitment,
+                bytes32(uint256(uint160(address(this)))),
+                bytes32(expiry)
             )
         );
         return IUnclonableCredential.Capability({
@@ -59,6 +61,19 @@ contract Fixtures is Test {
     ) internal view returns (IUnclonableCredential.Capability memory) {
         IUnclonableCredential.Capability memory cap = _buildCapability(agentId, capabilityIndex, expiry, salt);
         cap.executor = executor;
+        cap.capabilityCommitment = keccak256(
+            abi.encodePacked(
+                keccak256("ERC-1953/capability/v1"),
+                salt,
+                bytes32(agentId),
+                bytes32(uint256(CHAIN_ID)),
+                bytes32(HOME_DOMAIN_ID),
+                bytes32(capabilityIndex),
+                cap.actionCommitment,
+                bytes32(uint256(uint160(executor))),
+                bytes32(expiry)
+            )
+        );
         return cap;
     }
 
@@ -68,7 +83,7 @@ contract Fixtures is Test {
 
     function _setUp() internal {
         domainRegistry = new DomainRegistry();
-        domainRegistry.registerDomain(HOME_DOMAIN_ID);
+        domainRegistry.registerDomain(HOME_DOMAIN_ID, address(this));
         verifier = new MockVerifier();
         guard = new UnclonableCredentialGuard(address(verifier), address(domainRegistry));
     }

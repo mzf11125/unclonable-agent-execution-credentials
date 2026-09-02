@@ -26,7 +26,7 @@ That thread ran for two weeks and changed the design three times. The substantiv
 - The security claim is stated as at most once with no ordering, not exactly once. Two holders of the same salt race and the Guard cannot rank them.
 - Aggregate spend per identity is named as a separate layer and explicitly out of scope.
 
-The reference implementation lives at https://github.com/mzf11125/unclonable-agent-execution-credentials and the Solidity sources are also vendored into `assets/erc-1953/`, so the proposal body carries no external links. Nineteen Foundry tests cover the cases in the Test Cases section, including the adversarial vectors from the thread.
+The reference implementation lives at https://github.com/mzf11125/unclonable-agent-execution-credentials and the Solidity sources are also vendored into `assets/erc-1953/`, so the proposal body carries no external links. Twenty-four Foundry tests cover the cases in the Test Cases section, including the adversarial vectors from the thread.
 
 Known open questions, stated rather than hidden:
 

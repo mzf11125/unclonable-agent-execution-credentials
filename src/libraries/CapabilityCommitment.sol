@@ -15,14 +15,16 @@ library CapabilityCommitment {
     }
 
     /// @notice Compute capabilityCommitment = H(CAPABILITY_TAG, salt, agentId, homeChainId,
-    ///         homeDomainId, capabilityIndex, actionCommitment)
+    ///         homeDomainId, capabilityIndex, actionCommitment, executor, expiry)
     function computeCapabilityCommitment(
         bytes32 salt,
         uint256 agentId,
         uint256 homeChainId,
         uint256 homeDomainId,
         uint256 capabilityIndex,
-        bytes32 actionCommitment
+        bytes32 actionCommitment,
+        address executor,
+        uint256 expiry
     ) internal pure returns (bytes32) {
         return keccak256(
             abi.encodePacked(
@@ -32,7 +34,9 @@ library CapabilityCommitment {
                 bytes32(homeChainId),
                 bytes32(homeDomainId),
                 bytes32(capabilityIndex),
-                actionCommitment
+                actionCommitment,
+                bytes32(uint256(uint160(executor))),
+                bytes32(expiry)
             )
         );
     }

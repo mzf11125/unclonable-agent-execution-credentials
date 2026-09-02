@@ -38,6 +38,10 @@ below, because they carry the number.
   opened as a draft. Domain separation tags settled from the `ERC-XXXX`
   placeholder to `ERC-1953` across the spec, the circuit notes, the Guards, and
   the fixtures.
+* 2026-09-03: `highestIssuedIndex` and orchestrator authorization scoped per
+  `(agentId, homeDomainId)`; `nullifier`, `executor`, and `expiry` folded into
+  the constrained public-input/commitment surface, closing the
+  unconstrained-nullifier and commitment-preimage gaps found in public review.
 
 ## External Reviews
 
@@ -105,10 +109,6 @@ Thread 29274 in full. Everything below is folded into the draft.
   implementation reconstructed a malformed digest and passed an empty signature,
   which could never verify, and has been removed rather than left in place.
   Deferred until a concrete integrator asks for it.
-
-* [ ] 2026-08-17: **Orchestrator is a single address.** `CoupledCredentialGuard`
-  takes one immutable `orchestrator`. A domain with rotating or multi party
-  issuance needs more, and the domain registry is the natural place for it.
 
 ## Summary
 
@@ -212,7 +212,8 @@ Adapted from post 13.
 | This draft | Consumption | Guarantees the resulting credential is spent at most once, and that a spend performs the issued action. |
 | Identity scoped cumulative bound | Budget | Meters total spend per `agentId` so that N clones share one budget rather than multiplying it. Not defined here. |
 | ERC-8004 | Identity | Supplies the agent identity the capability token binds to. |
-| ERC-7579, ERC-6900 | Integration surface | The Guard operates as a pre execution hook or validation module. Dispatch must route through `execute`. |
+| ERC-7579 | Integration surface | The Guard is an executor module, not a hook or validator. The account's authorization control on `executeFromExecutor` (e.g. `onlyExecutorModule`) is what the Guard calls in place of `target`, so the burn and the call share one frame. |
+| ERC-6900 | Integration surface | The Guard composes as direct call validation at entity id `0xffffffff`. Dispatch stays with the account; atomicity and installed validation/execution hooks are unchanged. |
 
 **Unclonability and authorization soundness are orthogonal.** This standard
 guarantees that a specific authorized payload executes at most once. It makes no
@@ -245,8 +246,8 @@ CAPABILITY_TAG = keccak256("ERC-1953/capability/v1")
 
 ```solidity
 struct Capability {
-    bytes32 nullifier;            // public output, H(NULLIFIER_TAG, salt)
-    bytes32 capabilityCommitment; // public input, binds salt to every field below
+    bytes32 nullifier;            // public input, H(NULLIFIER_TAG, salt), constrained by the circuit
+    bytes32 capabilityCommitment; // public input, binds salt, executor, and expiry to every field below
     uint256 agentId;              // ERC-8004 identity
     uint256 homeChainId;          // the one chain this capability spends on
     uint256 homeDomainId;         // issuing orchestrator domain
@@ -280,7 +281,8 @@ form above is recommended because it is stateless given the index.
 ```
 nullifier            = H(NULLIFIER_TAG, salt)
 capabilityCommitment = H(CAPABILITY_TAG, salt, agentId, homeChainId,
-                         homeDomainId, capabilityIndex, actionCommitment)
+                         homeDomainId, capabilityIndex, actionCommitment,
+                         executor, expiry)
 ```
 
 > **Critical**: `chainId` MUST NOT be included in the nullifier preimage.
@@ -290,6 +292,15 @@ capabilityCommitment = H(CAPABILITY_TAG, salt, agentId, homeChainId,
 
 `H` is `keccak256` over the `abi.encodePacked` concatenation, as implemented in
 [`src/libraries/CapabilityCommitment.sol`](./src/libraries/CapabilityCommitment.sol).
+
+`executor` and `expiry` are part of the preimage. An earlier draft checked both
+independently against calldata, but neither was bound by
+`capabilityCommitment`, so a salt holder could self-assert any executor or
+expiry and pass both checks trivially, since the caller controlled the very
+values being checked against. Folding them into the commitment means the
+orchestrator's `issue()`-time commitment fixes them, and the proof must show
+knowledge of a salt, executor, and expiry combination matching what was
+issued.
 
 The preimage is the tag and the salt alone. Posts 8 and 9 discussed
 `H(salt, agentId, domainId)`. Both extra fields are already inputs to the salt
@@ -305,8 +316,12 @@ is paid once per capability by the agent.
 
 ### Public Inputs
 
-The verifier receives eight public inputs in this exact order. Circuit and Guard
-must agree, so the ordering is normative.
+The verifier receives nine public inputs in this exact order. Circuit and Guard
+must agree, so the ordering is normative. The ninth input MUST be constrained
+by the circuit to equal `H(NULLIFIER_TAG, salt)` — the nullifier is a public
+input to the proof, not a circuit output, since a value returned by the
+circuit rather than constrained as a public input is unconstrained calldata
+the caller can pick freely.
 
 | Index | Value |
 | --- | --- |
@@ -318,6 +333,7 @@ must agree, so the ordering is normative.
 | 5 | `actionCommitment` |
 | 6 | `executor` |
 | 7 | `expiry` |
+| 8 | `nullifier` |
 
 ### Interface
 
@@ -328,6 +344,7 @@ interface IUnclonableCredential {
     event CapabilityIssued(
         bytes32 indexed capabilityCommitment,
         uint256 indexed agentId,
+        uint256 indexed homeDomainId,
         uint256 capabilityIndex
     );
 
@@ -346,6 +363,7 @@ interface IUnclonableCredential {
     function issue(
         bytes32 capabilityCommitment,
         uint256 agentId,
+        uint256 homeDomainId,
         uint256 capabilityIndex
     ) external;
 
@@ -358,15 +376,17 @@ interface IUnclonableCredential {
 
     function isConsumed(bytes32 nullifier) external view returns (bool);
 
-    function highestIssuedIndex(uint256 agentId) external view returns (uint256);
+    function highestIssuedIndex(uint256 agentId, uint256 homeDomainId) external view returns (uint256);
 }
 ```
 
 ### Issuance
 
-`issue` is restricted to the issuing orchestrator. It records the commitment,
-raises `highestIssuedIndex[agentId]` when the index exceeds it, and emits
-`CapabilityIssued`.
+`issue` is restricted to the issuing orchestrator of `homeDomainId`. It records
+the commitment, raises `highestIssuedIndex[agentId][homeDomainId]` when the
+index exceeds it, and emits `CapabilityIssued`. The orchestrator authorized to
+call `issue` for a given `homeDomainId` is recorded in the domain registry at
+registration time.
 
 Mandatory rather than optional. Because `capabilityCommitment` binds
 `actionCommitment`, a Guard that accepts any internally consistent proof accepts
@@ -383,7 +403,7 @@ property and not an implementation detail.
 5. `!consumed[nullifier]`, else `CredentialAlreadySpent(nullifier)`
 6. `issued[capabilityCommitment]`, else `CommitmentNotIssued(capabilityCommitment)`
 7. `keccak256(abi.encode(target, callData)) == actionCommitment`
-8. `verifier.verify(proof, publicInputs)` passes
+8. `verifier.verify(proof, publicInputs)` passes against the nine public inputs above
 
 Then set `consumed[nullifier] = true`, emit `NullifierBurned`, call
 `target` with `callData`, and revert everything if the action reverts.
@@ -406,6 +426,11 @@ and both sides are required.
 the orchestrator never issued indicates a clone. One at an index it did issue
 indicates a reissue bug on the orchestrator side. Exercised by
 `test_Coupled_CollisionIsClassifiable`.
+
+`highestIssuedIndex` is scoped per `(agentId, homeDomainId)`, not per `agentId`
+alone, so a collision in one domain cannot be misclassified against another
+domain's ceiling for the same agent. Exercised by
+`test_CollisionInASecondDomainIsMisclassified`.
 
 ### Recovery
 

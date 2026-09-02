@@ -28,40 +28,45 @@ contract CoupledCredentialGuard is IUnclonableCredential {
 
     IVerifier public immutable verifier;
     DomainRegistry public immutable domainRegistry;
-    address public immutable orchestrator;
 
     mapping(bytes32 => bool) public consumed;
     mapping(bytes32 => bool) public issued;
-    /// @dev agentId => highest issued index, so a collision can be classified: an index the
-    ///      orchestrator never issued is a clone, one it did issue is its own reissue bug.
-    mapping(uint256 => uint256) public override highestIssuedIndex;
+    /// @dev (agentId, homeDomainId) => highest issued index, so a collision can be classified: an
+    ///      index the orchestrator never issued in that domain is a clone, one it did issue is its
+    ///      own reissue bug. Keyed by the pair so a collision in one domain cannot be misclassified
+    ///      against another domain's ceiling for the same agent.
+    mapping(uint256 => mapping(uint256 => uint256)) public override highestIssuedIndex;
 
-    constructor(address _verifier, address _domainRegistry, address _orchestrator) {
+    constructor(address _verifier, address _domainRegistry) {
         verifier = IVerifier(_verifier);
         domainRegistry = DomainRegistry(_domainRegistry);
-        orchestrator = _orchestrator;
     }
 
     /// @inheritdoc IUnclonableCredential
-    function issue(bytes32 capabilityCommitment, uint256 agentId, uint256 capabilityIndex)
-        external
-        override
-    {
-        if (msg.sender != orchestrator) revert NotOrchestrator();
+    function issue(
+        bytes32 capabilityCommitment,
+        uint256 agentId,
+        uint256 homeDomainId,
+        uint256 capabilityIndex
+    ) external override {
+        if (msg.sender != domainRegistry.orchestratorOf(homeDomainId)) revert NotOrchestrator();
         issued[capabilityCommitment] = true;
-        if (capabilityIndex > highestIssuedIndex[agentId]) highestIssuedIndex[agentId] = capabilityIndex;
-        emit CapabilityIssued(capabilityCommitment, agentId, capabilityIndex);
+        if (capabilityIndex > highestIssuedIndex[agentId][homeDomainId]) {
+            highestIssuedIndex[agentId][homeDomainId] = capabilityIndex;
+        }
+        emit CapabilityIssued(capabilityCommitment, agentId, homeDomainId, capabilityIndex);
     }
 
     /// @dev Order: [capabilityCommitment, agentId, homeChainId, homeDomainId, capabilityIndex,
-    ///      actionCommitment, executor, expiry]. The circuit recomputes the commitment from the
-    ///      private salt and these inputs, so the salt never reaches calldata.
+    ///      actionCommitment, executor, expiry, nullifier]. The circuit constrains both
+    ///      capabilityCommitment and nullifier against the private salt, so neither can be an
+    ///      unconstrained calldata value the caller freely picks.
     function _buildPublicInputs(IUnclonableCredential.Capability calldata cap)
         internal
         pure
         returns (bytes32[] memory inputs)
     {
-        inputs = new bytes32[](8);
+        inputs = new bytes32[](9);
         inputs[0] = cap.capabilityCommitment;
         inputs[1] = bytes32(cap.agentId);
         inputs[2] = bytes32(cap.homeChainId);
@@ -70,6 +75,7 @@ contract CoupledCredentialGuard is IUnclonableCredential {
         inputs[5] = cap.actionCommitment;
         inputs[6] = bytes32(uint256(uint160(cap.executor)));
         inputs[7] = bytes32(cap.expiry);
+        inputs[8] = cap.nullifier;
     }
 
     /// @inheritdoc IUnclonableCredential

@@ -34,7 +34,9 @@ contract UnclonableCredentialGuardTest is Test {
                 bytes32(chainId),
                 bytes32(HOME_DOMAIN_ID),
                 bytes32(capabilityIndex),
-                actionCommitment
+                actionCommitment,
+                bytes32(uint256(uint160(address(this)))),
+                bytes32(expiry)
             )
         );
         return IUnclonableCredential.Capability({
@@ -69,7 +71,9 @@ contract UnclonableCredentialGuardTest is Test {
                 bytes32(cap.homeChainId),
                 bytes32(cap.homeDomainId),
                 bytes32(cap.capabilityIndex),
-                cap.actionCommitment
+                cap.actionCommitment,
+                bytes32(uint256(uint160(cap.executor))),
+                bytes32(cap.expiry)
             )
         );
     }
@@ -77,7 +81,7 @@ contract UnclonableCredentialGuardTest is Test {
     function setUp() public {
         vm.chainId(11155111);
         domainRegistry = new DomainRegistry();
-        domainRegistry.registerDomain(HOME_DOMAIN_ID);
+        domainRegistry.registerDomain(HOME_DOMAIN_ID, address(this));
         verifier = new MockVerifier();
         guard = new UnclonableCredentialGuard(address(verifier), address(domainRegistry));
     }
@@ -162,6 +166,8 @@ contract UnclonableCredentialGuardTest is Test {
         uint256 agentId = 5;
         uint256 capabilityIndex = 3;
         bytes32 actionCommitment = bytes32(uint256(99));
+        address executor = address(0x000000000000000000000000000000000000dEaD);
+        uint256 expiry = 2000000000;
 
         bytes32 expectedCommitment = keccak256(
             abi.encodePacked(
@@ -171,12 +177,14 @@ contract UnclonableCredentialGuardTest is Test {
                 bytes32(uint256(11155111)),
                 bytes32(HOME_DOMAIN_ID),
                 bytes32(capabilityIndex),
-                actionCommitment
+                actionCommitment,
+                bytes32(uint256(uint160(executor))),
+                bytes32(expiry)
             )
         );
         assertEq(
             CapabilityCommitment.computeCapabilityCommitment(
-                salt, agentId, 11155111, HOME_DOMAIN_ID, capabilityIndex, actionCommitment
+                salt, agentId, 11155111, HOME_DOMAIN_ID, capabilityIndex, actionCommitment, executor, expiry
             ),
             expectedCommitment,
             "CAPABILITY_TAG or the commitment preimage drifted from the spec"
@@ -200,7 +208,8 @@ contract UnclonableCredentialGuardTest is Test {
         assertEq(
             cap.capabilityCommitment,
             CapabilityCommitment.computeCapabilityCommitment(
-                salt, cap.agentId, cap.homeChainId, cap.homeDomainId, cap.capabilityIndex, cap.actionCommitment
+                salt, cap.agentId, cap.homeChainId, cap.homeDomainId, cap.capabilityIndex, cap.actionCommitment,
+                cap.executor, cap.expiry
             ),
             "fixture commitment drifted"
         );

@@ -24,6 +24,7 @@ contract AdversarialGriefBurnTest is Fixtures {
     function _cap(uint256 index, bytes32 action) internal view returns (IUnclonableCredential.Capability memory) {
         bytes32 salt = keccak256(abi.encode("salt", index));
         bytes32 nullifier = keccak256(abi.encodePacked(NULL_TAG, salt));
+        uint256 expiry = block.timestamp + 1 days;
         bytes32 commitment = keccak256(
             abi.encodePacked(
                 CAP_TAG,
@@ -32,7 +33,9 @@ contract AdversarialGriefBurnTest is Fixtures {
                 bytes32(uint256(CHAIN_ID)),
                 bytes32(HOME_DOMAIN_ID),
                 bytes32(index),
-                action
+                action,
+                bytes32(uint256(uint160(address(this)))),
+                bytes32(expiry)
             )
         );
         return IUnclonableCredential.Capability({
@@ -44,7 +47,7 @@ contract AdversarialGriefBurnTest is Fixtures {
             capabilityIndex: index,
             actionCommitment: action,
             executor: address(this),
-            expiry: block.timestamp + 1 days
+            expiry: expiry
         });
     }
 

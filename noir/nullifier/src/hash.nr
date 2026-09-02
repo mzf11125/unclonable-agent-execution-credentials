@@ -14,6 +14,8 @@ pub fn capability_commitment(
     home_domain_id: Field,
     capability_index: Field,
     action_commitment: Field,
+    executor: Field,
+    expiry: Field,
 ) -> Field {
     salt
 }
